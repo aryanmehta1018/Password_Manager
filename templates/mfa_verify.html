@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify MFA</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f5f7fb;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .card {
+            background: white;
+            width: 420px;
+            padding: 35px;
+            border-radius: 18px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+            text-align: center;
+        }
+
+        h2 {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .method {
+            margin-bottom: 18px;
+        }
+
+        .method-title {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        .helper {
+            font-size: 13px;
+            color: #777;
+            margin-top: 6px;
+        }
+
+        input {
+            width: 80%;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            outline: none;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 4px;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        input:disabled {
+            background: #f0f0f0;
+            cursor: not-allowed;
+        }
+
+        input:focus {
+            border-color: #4a63e7;
+            box-shadow: 0 0 8px rgba(74, 99, 231, 0.3);
+        }
+
+        .divider {
+            margin: 20px 0;
+            font-size: 14px;
+            color: #999;
+            font-weight: 600;
+        }
+
+        button {
+            margin-top: 22px;
+            padding: 12px 28px;
+            background: #4a63e7;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            background: #3e55cf;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: #4a63e7;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .flash {
+            background:#f8d7da;
+            color:#721c24;
+            padding:10px;
+            border-radius:8px;
+            margin-bottom:15px;
+            font-weight:500;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+
+    <h2>MFA Verification</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, msg in messages %}
+            <div class="flash">{{ msg }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST" id="mfaForm">
+
+        <!-- Authenticator -->
+        <div class="method">
+            <div class="method-title">Authenticator App</div>
+            <input
+                type="text"
+                name="code"
+                id="totp"
+                placeholder="000000"
+                maxlength="6"
+                inputmode="numeric"
+            >
+            <div class="helper">Enter the 6-digit code from Google Authenticator</div>
+        </div>
+
+        <div class="divider">OR</div>
+
+        <!-- Recovery Code -->
+        <div class="method">
+            <div class="method-title">Recovery Code</div>
+            <input
+                type="text"
+                name="recovery_code"
+                id="recovery"
+                placeholder="XXXX-XXXX"
+            >
+            <div class="helper">One-time use emergency recovery code</div>
+        </div>
+        <button
+            type="button"
+            style="
+                margin-top:12px;
+                background:#16a34a;
+            "
+            onclick="startWebAuthn()"
+        >
+            🔐 Use Passkey (Windows Hello)
+        </button>
+
+
+        <button type="submit" id="submitBtn">
+            Verify
+        </button>
+    </form>
+
+    <a href="/login" class="back-link">← Back to Login</a>
+
+</div>
+
+<script>
+    const totp = document.getElementById("totp");
+    const recovery = document.getElementById("recovery");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function syncInputs() {
+        if (totp.value.length > 0) {
+            recovery.disabled = true;
+        } else if (recovery.value.length > 0) {
+            totp.disabled = true;
+        } else {
+            totp.disabled = false;
+            recovery.disabled = false;
+        }
+    }
+
+    totp.addEventListener("input", syncInputs);
+    recovery.addEventListener("input", syncInputs);
+
+    document.getElementById("mfaForm").addEventListener("submit", () => {
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Verifying...";
+    });
+</script>
+<script>
+async function startWebAuthn() {
+    const res = await fetch("/mfa/webauthn/auth/start");
+    const options = await res.json();
+
+    options.challenge = Uint8Array.from(
+        atob(options.challenge.replace(/-/g,'+').replace(/_/g,'/')),
+        c => c.charCodeAt(0)
+    );
+
+    options.allowCredentials = options.allowCredentials.map(cred => ({
+        ...cred,
+        id: Uint8Array.from(
+            atob(cred.id.replace(/-/g,'+').replace(/_/g,'/')),
+            c => c.charCodeAt(0)
+        )
+    }));
+
+    const assertion = await navigator.credentials.get({
+        publicKey: options
+    });
+
+    const payload = {
+        id: assertion.id,
+        rawId: btoa(String.fromCharCode(...new Uint8Array(assertion.rawId))),
+        type: assertion.type,
+        response: {
+            authenticatorData: btoa(
+                String.fromCharCode(...new Uint8Array(assertion.response.authenticatorData))
+            ),
+            clientDataJSON: btoa(
+                String.fromCharCode(...new Uint8Array(assertion.response.clientDataJSON))
+            ),
+            signature: btoa(
+                String.fromCharCode(...new Uint8Array(assertion.response.signature))
+            ),
+            userHandle: assertion.response.userHandle
+                ? btoa(String.fromCharCode(...new Uint8Array(assertion.response.userHandle)))
+                : null
+        }
+    };
+
+    const verify = await fetch("/mfa/webauthn/auth/finish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const result = await verify.json();
+    if (result.success) {
+        window.location.href = "/dashboard";
+    } else {
+        alert("Passkey verification failed");
+    }
+}
+</script>
+
+
+</body>
+</html>

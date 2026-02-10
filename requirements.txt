@@ -1,0 +1,9 @@
+Flask
+Flask-Login
+Flask-SQLAlchemy
+Flask-Cors
+argon2-cffi
+pyotp
+qrcode
+cryptography
+pymysql

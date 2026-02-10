@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MFA Setup</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: #f5f7fb;
+        font-family: 'Inter', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .card {
+        background: white;
+        width: 420px;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 12px 35px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+
+    h2 {
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    p {
+        color: #555;
+        font-size: 15px;
+        line-height: 1.5;
+    }
+
+    img {
+        margin-top: 15px;
+        width: 210px;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    .manual-key {
+        margin-top: 20px;
+        font-size: 16px;
+        font-weight: 600;
+        background: #eef1f7;
+        padding: 10px 15px;
+        border-radius: 10px;
+        display: inline-block;
+        word-break: break-all;
+    }
+
+    .button {
+        display: inline-block;
+        margin-top: 25px;
+        padding: 12px 25px;
+        background: #4a63e7;
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+    .button:hover {
+        background: #3e55cf;
+    }
+
+    /* Back Button (smaller and subtle) */
+    .back-btn {
+        margin-top: 15px;
+        display: inline-block;
+        font-size: 14px;
+        color: #4a63e7;
+        text-decoration: none;
+        font-weight: 600;
+        opacity: 0.8;
+    }
+
+    .back-btn:hover {
+        opacity: 1;
+    }
+</style>
+</head>
+
+<body class="{% if current_user.is_authenticated and current_user.pref_dark_mode %}dark{% endif %}">
+
+
+<div class="card">
+
+    <h2>Enable Two-Factor Authentication</h2>
+
+    <p>Scan this QR code using Google Authenticator or Authy:</p>
+
+    <img src="{{ qr_code }}" alt="MFA QR Code">
+
+    <p>Or enter this secret manually:</p>
+    <div class="manual-key">{{ secret_key }}</div>
+
+    <a href="/dashboard" class="button">Done</a>
+
+    <!-- ★ New Back to Dashboard link (non-intrusive) -->
+    <a href="/dashboard" class="back-btn">← Back to Dashboard</a>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recovery Codes</title>
+    <style>
+        body {
+            font-family: Segoe UI;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+        .card {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        li {
+            font-size: 18px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Save Your Recovery Codes</h2>
+
+    <p>
+        These codes can be used if you lose access to your
+        authenticator app. Each code works once.
+    </p>
+
+    <ul>
+        {% for code in codes %}
+            <li>{{ code }}</li>
+        {% endfor %}
+    </ul>
+
+    <p><b>Store them securely. You will not see them again.</b></p>
+
+    <a href="/dashboard">I’ve saved them</a>
+</div>
+
+</body>
+</html>

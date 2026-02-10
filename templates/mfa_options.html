@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Choose MFA Method</title>
+    <style>
+        body { font-family: Segoe UI; background:#f4f6f9; }
+        .card {
+            max-width:500px; margin:60px auto; padding:30px;
+            background:white; border-radius:12px;
+            box-shadow:0 10px 30px rgba(0,0,0,.1);
+        }
+        .option {
+            padding:15px; border:1px solid #ddd;
+            border-radius:8px; margin-bottom:15px;
+            cursor:pointer;
+        }
+        .option:hover { background:#f0f4ff; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Choose MFA Method</h2>
+
+    <div class="option" onclick="location.href='/mfa_setup'">
+        🔑 Authenticator App (Google Authenticator)
+    </div>
+
+    <div class="option" onclick="location.href='/mfa/recovery_codes'">
+        🧾 Recovery Codes
+    </div>
+
+    {% if not user.webauthn_enabled %}
+    <button onclick="startWebAuthnRegister()">
+        🔐 Enable Passkey (Windows Hello)
+    </button>
+    {% else %}
+    <p>✔ Passkey enabled</p>
+    {% endif %}
+
+    <a href="/dashboard">← Back</a>
+</div>
+<script>
+async function startWebAuthnRegister() {
+    const res = await fetch("/mfa/webauthn/register/start");
+    const options = await res.json();
+
+    options.challenge = Uint8Array.from(
+        atob(options.challenge.replace(/-/g,'+').replace(/_/g,'/')),
+        c => c.charCodeAt(0)
+    );
+
+    options.user.id = Uint8Array.from(
+        options.user.id, c => c.charCodeAt(0)
+    );
+
+    const credential = await navigator.credentials.create({
+        publicKey: options
+    });
+
+    const payload = {
+        id: credential.id,
+        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+        type: credential.type,
+        response: {
+            attestationObject: btoa(
+                String.fromCharCode(...new Uint8Array(credential.response.attestationObject))
+            ),
+            clientDataJSON: btoa(
+                String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
+            )
+        }
+    };
+
+    const verify = await fetch("/mfa/webauthn/register/finish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const result = await verify.json();
+    if (result.success) {
+        alert("Passkey enabled!");
+        location.reload();
+    }
+}
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Disable MFA</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f9;
+            padding: 40px;
+            text-align: center;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            width: 350px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        button:hover { background: #c0392b; }
+        a { color:#3498db; text-decoration:none; display:block; margin-top:15px; }
+    </style>
+</head>
+
+<body class="{% if current_user.is_authenticated and current_user.pref_dark_mode %}dark{% endif %}">
+
+    <div class="card">
+        <h2>Disable MFA</h2>
+        <p>Are you sure you want to disable Multi-Factor Authentication?</p>
+
+        <form method="POST">
+            <button type="submit">Disable MFA</button>
+        </form>
+
+        <a href="/dashboard">Cancel</a>
+    </div>
+</body>
+</html>
