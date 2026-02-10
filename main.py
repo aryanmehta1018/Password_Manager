@@ -12,7 +12,7 @@ from cryptography.fernet import Fernet
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from collections import Counter
-# Email OTP imports
+
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime, timedelta
@@ -41,14 +41,12 @@ import json
 import base64
 
 
-WEBAUTHN_RP_ID = "localhost"  # change to domain in production
+WEBAUTHN_RP_ID = "localhost"  
 WEBAUTHN_RP_NAME = "Secure Password Manager"
 WEBAUTHN_ORIGIN = "http://localhost:5000"
 
 
-# ===========================
-# Password Encryption
-# ===========================
+
 MASTER_KEY = Fernet(b"KwgUdkldOt9n4-mXvsI0OIkN6PopNeRSSTTfYhuZegQ=")
 
 def encrypt_password(plain):
@@ -61,7 +59,7 @@ def ip_to_location(ip):
     if not ip:
         return "Unknown"
 
-    # Private/local IP ranges
+    
     local_ranges = (
         "127.", "10.", "172.16.", "172.17.", "172.18.", "172.19.",
         "172.2", "172.30.", "172.31.", "192.168.", "::1"
@@ -85,9 +83,7 @@ def ip_to_location(ip):
     except:
         return "Unknown"
 
-# ===========================
-# Basic App Setup
-# ===========================
+
 ph = PasswordHasher()
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -104,9 +100,7 @@ login_manager.login_message = None
 login_manager.login_message_category = None
 
 
-# ===========================
-# Gmail SMTP OTP Sender
-# ===========================
+
 def generate_recovery_codes():
         return [secrets.token_hex(4) for _ in range(8)]
 
@@ -121,7 +115,7 @@ def send_login_otp(email, otp):
     msg["From"] = f"Secure Password Manager <{sender}>"
     msg["To"] = email
 
-    # ---------- Plain Text (Fallback) ----------
+
     text = f"""
 Your One-Time Password (OTP): {otp}
 
@@ -135,7 +129,7 @@ This code expires in 5 minutes.
 If this wasn’t you, secure your account immediately.
 """
 
-    # ---------- HTML Email ----------
+    
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -285,7 +279,7 @@ def send_password_reset_email(user):
     msg["From"] = f"Secure Password Manager <{sender}>"
     msg["To"] = user.email
 
-    # ---------- Plain Text ----------
+    
     text = f"""
 We received a request to reset your password.
 
@@ -297,7 +291,7 @@ This link expires in 30 minutes.
 If you didn’t request this, you can safely ignore this email.
 """
 
-    # ---------- HTML ----------
+    
     html = f"""
 <!DOCTYPE html>
 <html>
@@ -399,9 +393,7 @@ def verify_recovery_code(user, submitted_code):
 
     return False
 
-# ===========================
-# Models
-# ===========================
+
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
@@ -476,14 +468,13 @@ class Passwords(db.Model):
     website = db.Column(db.String(255), nullable=False)
     username = db.Column(db.String(255), nullable=False)
 
-    # 🔐 encrypted password
     password = db.Column(db.Text, nullable=False)
 
-    # 🗂️ vault features
+  
     category = db.Column(db.String(100), default="General")
     notes = db.Column(db.Text, nullable=True)
 
-    # ⏱️ timestamps
+  
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(
         db.DateTime,
@@ -524,14 +515,13 @@ if not hasattr(User, "display_name"):
     User.avatar_url = db.Column(db.String(500), nullable=True)
     User.pref_dark_mode = db.Column(db.Boolean, default=False, nullable=False)
 
-# ---------- Helper: log activity ----------
+
 def log_activity(user_id, action, ip=None, meta=None):
     from datetime import datetime
 
     if ip is None:
         ip = get_real_ip()
 
-    # Convert localhost into user-friendly label
     if ip in ("127.0.0.1", "::1"):
         location = "Local Machine"
     else:
@@ -557,14 +547,14 @@ def generate_reset_token(user):
     return token
 
 
-# ---------- Helper: password health and security score ----------
+
 
 def password_strength_score(plain):
     """Return 0-100 password strength estimate."""
     if not plain: return 0
     score = 0
     length = len(plain)
-    # length contribution
+    
     score += min(40, (length * 4))  # up to 40
     classes = 0
     if re.search(r'[a-z]', plain): classes += 1
@@ -574,7 +564,7 @@ def password_strength_score(plain):
     score += int((classes / 4) * 35)  # up to 35
     if length > 12:
         score += min(10, length - 12)
-    # penalties
+    
     low = plain.lower()
     commons = {"123456","password","qwerty","abc123","111111","123123"}
     if low in commons:
@@ -597,7 +587,7 @@ def analyze_user_passwords(user):
     """
     pw_objs = user.passwords
     result = {"total": len(pw_objs), "weak": 0, "reused_groups": [], "individual": []}
-    # decrypt and compute
+
     seen = {}
     for p in pw_objs:
         try:
@@ -615,7 +605,7 @@ def analyze_user_passwords(user):
         })
         if plain:
             seen.setdefault(plain, []).append(p)
-    # reused
+    
     for plain, entries in seen.items():
         if len(entries) > 1:
             result["reused_groups"].append({
@@ -631,22 +621,22 @@ def compute_security_score(user):
     """
     base = 100
     pw_analysis = analyze_user_passwords(user)
-    # penalty weak passwords
+    
     base -= pw_analysis["weak"] * 6
-    # penalty reused
+    
     for g in pw_analysis["reused_groups"]:
         base -= (g["count"] - 1) * 8
-    # penalty: no MFA
+    
     if not user.mfa_enabled:
         base -= 10
-    # penalty: no email-otp set (we use otp fields as sign)
+    
     if not user.otp_code and user.otp_expiry is None:
-        # we won't penalize too harshly because otp used only at login
+        
         base -= 3
-    # penalty: no api token
+   
     if not user.api_token:
         base -= 3
-    # clamp
+   
     base = max(0, min(100, base))
     return int(base)
 
@@ -654,13 +644,13 @@ with app.app_context():
     db.create_all()
 
 def get_real_ip():
-    # If you're behind reverse proxy / local dev tools
+   
     if request.headers.get("X-Forwarded-For"):
         return request.headers.get("X-Forwarded-For").split(",")[0].strip()
 
     ip = request.remote_addr
     if ip in (None, "127.0.0.1", "::1"):
-        return "127.0.0.1"  # We will map this to Local Machine later
+        return "127.0.0.1"  
 
     return ip
 
@@ -713,22 +703,15 @@ def update_session_last_active():
                 db.session.commit()
 
 
-# ===========================
+
 # Routes
-# ===========================
+
 @app.route('/')
 def home():
-    return """
-    <div style='text-align:center;margin-top:50px;font-size:24px;'>
-        <p>Welcome to the Password Manager!</p>
-        <p><a href='/login'>Click Here To Login</a></p>
-    </div>
-    """
+    return redirect(url_for("login"))
 
 
-# ---------------------------
-# Registration
-# ---------------------------
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -750,9 +733,7 @@ def register():
     return render_template("register.html")
 
 
-# ---------------------------
-# LOGIN (Password → Email OTP → MFA → Dashboard)
-# ---------------------------
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -779,9 +760,7 @@ def login():
 
 
 
-# ---------------------------
-# Email OTP Verification
-# ---------------------------
+
 @app.route('/email_verify', methods=['GET', 'POST'])
 def email_verify():
     user_id = session.get("pending_email_otp_user")
@@ -802,21 +781,21 @@ def email_verify():
             return redirect(url_for("login"))
 
         if code == user.otp_code:
-            # ✅ Clear OTP
+           
             user.otp_code = None
             user.otp_expiry = None
             db.session.commit()
 
-            # ✅ CLEAN SESSION TRANSITION
+            
             session.pop("pending_mfa_user", None)
 
-            # 🔥 IF MFA ENABLED → MFA STEP
+            
             if user.mfa_enabled or user.webauthn_enabled:
                 session["pending_mfa_user"] = user.id
                 return redirect(url_for("mfa_verify"))
 
 
-            # 🔥 ELSE → LOGIN COMPLETE
+            
             login_user(user)
 
             log_activity(
@@ -872,7 +851,7 @@ def forgot_password():
         email = request.form.get("email")
         user = User.query.filter_by(email=email).first()
 
-        # Always show success (anti-enumeration)
+        
         if user:
             send_password_reset_email(user)
             log_activity(user.id, "password_reset_requested")
@@ -914,9 +893,7 @@ def reset_password(token):
 
 
 
-# ---------------------------
-# Google Authenticator MFA
-# ---------------------------
+
 
 @app.route("/mfa_setup")
 @login_required
@@ -978,12 +955,12 @@ def mfa_verify():
         code = (request.form.get("code") or "").strip()
         recovery_code = (request.form.get("recovery_code") or "").strip()
 
-        # ❌ BOTH PROVIDED
+        
         if code and recovery_code:
             flash("Use either Authenticator code OR Recovery code, not both.", "danger")
             return render_template("mfa_verify.html")
 
-        # ❌ NONE PROVIDED
+        
         if not code and not recovery_code:
             flash("Please enter a verification code.", "danger")
             return render_template("mfa_verify.html")
@@ -993,7 +970,7 @@ def mfa_verify():
 
         
 
-        # ✅ AUTHENTICATOR
+        
         if code:
             if not user.mfa_secret:
                 flash("Authenticator is not enabled.", "danger")
@@ -1006,7 +983,7 @@ def mfa_verify():
                 flash("Invalid authenticator code.", "danger")
                 return render_template("mfa_verify.html")
 
-        # ✅ RECOVERY CODE
+        
         if recovery_code:
             if verify_recovery_code(user, recovery_code):
                 verified = True
@@ -1015,7 +992,7 @@ def mfa_verify():
                 flash("Invalid or already-used recovery code.", "danger")
                 return render_template("mfa_verify.html")
 
-        # ✅ LOGIN SUCCESS
+        
         login_user(user)
         session.pop("pending_mfa_user", None)
 
@@ -1034,13 +1011,11 @@ def mfa_verify():
     )
 
 
-# ---------------------------
-# Dashboard
-# ---------------------------
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Decrypt passwords
+    
     vault_passwords = []
     for p in current_user.passwords:
         vault_passwords.append({
@@ -1056,21 +1031,21 @@ def dashboard():
     )
 
 
-    # Password analysis & security score
+    
     pw_analysis = analyze_user_passwords(current_user)
     score = compute_security_score(current_user)
 
-    # Activity logs
+    
     activities = LoginActivity.query.filter_by(
         user_id=current_user.id
     ).order_by(LoginActivity.timestamp.desc()).limit(10).all()
 
-    # Active sessions
+    
     sessions = SessionRecord.query.filter_by(
         user_id=current_user.id
     ).order_by(SessionRecord.last_active.desc()).all()
 
-    # Stats
+    
     total_passwords = pw_analysis["total"]
     weak_passwords = pw_analysis["weak"]
     reused_count = len(pw_analysis["reused_groups"])
@@ -1108,17 +1083,17 @@ def profile_edit():
 @app.route("/profile")
 @login_required
 def profile():
-    # password analysis & score
+    
     pw_analysis = analyze_user_passwords(current_user)
     score = compute_security_score(current_user)
 
-    # login activity (last 20)
+    
     activities = LoginActivity.query.filter_by(user_id=current_user.id).order_by(LoginActivity.timestamp.desc()).limit(20).all()
 
-    # active sessions
+    
     sessions = SessionRecord.query.filter_by(user_id=current_user.id).order_by(SessionRecord.last_active.desc()).all()
 
-    # other summary stats
+    
     total_passwords = pw_analysis["total"]
     weak_passwords = pw_analysis["weak"]
     reused_count = len(pw_analysis["reused_groups"])
@@ -1155,7 +1130,7 @@ def update_dark_mode():
     db.session.commit()
     return jsonify(success=True)
 
-# ---------- Small admin/action endpoints used by the UI ----------
+
 @app.route("/profile/regenerate_token", methods=["POST"])
 @login_required
 def profile_regenerate_token():
@@ -1180,9 +1155,9 @@ def profile_revoke_session():
     if not s:
         return jsonify({"success": False}), 404
 
-    # 🔥 If user revokes their CURRENT session
+    
     if session.get("session_token") == s.session_token:
-        session.clear()  # logs user out immediately
+        session.clear() 
 
     db.session.delete(s)
     db.session.commit()
@@ -1200,7 +1175,7 @@ def profile_revoke_session():
 @app.route("/profile/toggle_mfa", methods=["POST"])
 @login_required
 def profile_toggle_mfa():
-    # toggles MFA on/off; for enabling we redirect to mfa_setup page or return url
+    
     action = request.json.get("action")
     if action == "disable":
         current_user.mfa_enabled = False
@@ -1211,13 +1186,13 @@ def profile_toggle_mfa():
         log_activity(current_user.id, "mfa_disabled")
         return jsonify({"success": True})
     else:
-        # enable -> return mfa setup URL so frontend can navigate
+        
         return jsonify({"success": True, "setup_url": url_for("mfa_setup")})
 
 @app.route("/profile/export", methods=["POST"])
 @login_required
 def profile_export():
-    # export user's passwords in encrypted JSON (they can download)
+    
     data = []
     for p in current_user.passwords:
         data.append({
@@ -1227,25 +1202,24 @@ def profile_export():
             "id": p.id
         })
     payload = {"exported_at": datetime.utcnow().isoformat(), "data": data}
-    # return as JSON response
+    
     return jsonify({"success": True, "payload": payload})
 
 @app.route("/profile/delete_account", methods=["POST"])
 @login_required
 def profile_delete_account():
-    # require confirmation param
+    
     confirm = (request.json or {}).get("confirm")
     if confirm != "DELETE":
         return jsonify({"success": False, "message": "missing confirmation"}), 400
 
-    # delete user-related data (careful in production)
-    # delete passwords
+    
     Passwords.query.filter_by(user_id=current_user.id).delete()
     SessionRecord.query.filter_by(user_id=current_user.id).delete()
     LoginActivity.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
 
-    # finally delete user
+   
     uid = current_user.id
     logout_user()
     u = User.query.get(uid)
@@ -1279,9 +1253,7 @@ def logout():
     return redirect(url_for("login"))
 
 
-# ---------------------------
-# Add Password
-# ---------------------------
+
 @app.route('/add_password', methods=['GET', 'POST'])
 @login_required
 def add_password():
@@ -1350,9 +1322,7 @@ def edit_password(password_id):
         password=password_entry
     )
 
-# ---------------------------
-# Delete Password
-# ---------------------------
+
 @app.route('/delete_password/<int:password_id>', methods=['POST'])
 @login_required
 def delete_password(password_id):
@@ -1366,9 +1336,7 @@ def delete_password(password_id):
     return {"success": True, "message": "Password deleted"}
 
 
-# ==========================================
-# API ROUTES (for Browser Extension)
-# ==========================================
+
 @app.route('/api/save_credentials', methods=['POST'])
 def save_credentials():
     data = request.json
@@ -1429,7 +1397,7 @@ def get_credentials():
 @app.route('/generate_token')
 @login_required
 def generate_token():
-    token = current_user.ensure_api_token()  # Creates one if missing
+    token = current_user.ensure_api_token()  
     try:
         return render_template('token.html', token=token)
     except:
@@ -1445,7 +1413,7 @@ def mfa_options():
 def setup_recovery_codes():
     codes = generate_recovery_codes()
 
-    # Store hashed codes
+    
     current_user.recovery_codes = json.dumps(
         [ph.hash(code) for code in codes]
     )
@@ -1466,7 +1434,7 @@ def webauthn_auth_start():
 
     credentials = [
         PublicKeyCredentialDescriptor(
-            id=cred.credential_id,   # MUST be raw bytes
+            id=cred.credential_id,   
             type=PublicKeyCredentialType.PUBLIC_KEY
         )
         for cred in user.webauthn_credentials
@@ -1500,7 +1468,7 @@ def webauthn_auth_finish():
     if not challenge:
         return jsonify({"error": "Missing challenge"}), 400
 
-    # 🔐 Decode credential ID safely (base64url → bytes)
+    
     credential_id = base64.urlsafe_b64decode(
         data["id"] + "=" * (-len(data["id"]) % 4)
     )
@@ -1517,13 +1485,13 @@ def webauthn_auth_finish():
         credential=data,
         expected_challenge=challenge,
         expected_rp_id=WEBAUTHN_RP_ID,
-        expected_origin=WEBAUTHN_ORIGIN,  # ✅ DO NOT hardcode
+        expected_origin=WEBAUTHN_ORIGIN,  
         credential_public_key=cred.public_key,
         credential_current_sign_count=cred.sign_count,
         require_user_verification=True,
     )
 
-    # 🔄 Update sign counter
+ 
     cred.sign_count = verification.new_sign_count
     db.session.commit()
 
@@ -1572,7 +1540,7 @@ def webauthn_register_finish():
         require_user_verification=True,
     )
 
-    # ✅ STORE INTO WebAuthnCredential TABLE (NOT User)
+   
     cred = WebAuthnCredential(
         user_id=current_user.id,
         credential_id=verification.credential_id,
@@ -1584,7 +1552,7 @@ def webauthn_register_finish():
     db.session.add(cred)
 
     current_user.webauthn_enabled = True
-    current_user.mfa_enabled = True   # ✅ ADD THIS
+    current_user.mfa_enabled = True  
     db.session.commit()
 
     session.pop("webauthn_register_challenge", None)
@@ -1594,8 +1562,6 @@ def webauthn_register_finish():
 
 
 
-# ===========================
-# Run the App
-# ===========================
+
 if __name__ == "__main__":
     app.run(debug=True)
