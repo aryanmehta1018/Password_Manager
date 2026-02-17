@@ -276,28 +276,7 @@
 
 
     
-    <div class="section">
-        <h3>Active Sessions</h3>
-        <div class="card">
-            <table>
-                <tr>
-                    <th>IP</th>
-                    <th>User Agent</th>
-                    <th>Last Active</th>
-                    <th></th>
-                </tr>
-
-                {% for s in sessions %}
-                <tr>
-                    <td>{{ s.ip }}</td>
-                    <td>{{ s.user_agent[:45] }}...</td>
-                    <td>{{ s.last_active }}</td>
-                    <td><button class="btn-danger" onclick="revokeSession({{ s.id }})">Revoke</button></td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
-    </div>
+    
 
 
     
