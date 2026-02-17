@@ -70,13 +70,11 @@
 
 
 <script>
-/* -----------------------------
-   PERSISTENT COUNTDOWN TIMER
---------------------------------*/
+
 const TIMER_KEY = "otp_expiry_time";
 let expiryTime = sessionStorage.getItem(TIMER_KEY);
 
-// If no expiry stored, set new one for 30 seconds
+
 if (!expiryTime) {
     expiryTime = Date.now() + 30000;
     sessionStorage.setItem(TIMER_KEY, expiryTime);
@@ -99,9 +97,7 @@ function updateTimer() {
 updateTimer();
 
 
-/* -----------------------------
-   COMBINE OTP BOXES INTO HIDDEN FIELD
---------------------------------*/
+
 const boxes = ["otp1", "otp2", "otp3", "otp4", "otp5", "otp6"];
 
 boxes.forEach((id, index) => {
@@ -128,9 +124,7 @@ function updateFinalOtp() {
 }
 
 
-/* -----------------------------
-   RESEND OTP WITHOUT RELOAD
---------------------------------*/
+
 document.getElementById("resendBtn").addEventListener("click", async () => {
     const btn = document.getElementById("resendBtn");
     btn.disabled = true;
@@ -144,7 +138,7 @@ document.getElementById("resendBtn").addEventListener("click", async () => {
     if (data.success) {
         alert("OTP sent again!");
 
-        // Reset timer
+        
         expiryTime = Date.now() + 30000;
         sessionStorage.setItem(TIMER_KEY, expiryTime);
         updateTimer();

@@ -383,7 +383,7 @@ def verify_recovery_code(user, submitted_code):
     for stored_hash in codes:
         try:
             if ph.verify(stored_hash, submitted_code):
-                # remove used code (one-time)
+                
                 codes.remove(stored_hash)
                 user.recovery_codes = json.dumps(codes)
                 db.session.commit()
@@ -400,11 +400,11 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(256), nullable=False)
     api_token = db.Column(db.String(64), unique=True, nullable=True)
 
-    # MFA (Google Authenticator)
+    
     mfa_enabled = db.Column(db.Boolean, default=False, nullable=False)
     mfa_secret = db.Column(db.String(64), nullable=True)
 
-    # Email OTP fields
+    
     otp_code = db.Column(db.String(6), nullable=True)
     otp_expiry = db.Column(db.DateTime, nullable=True)
     display_name = db.Column(db.String(100), nullable=True)
@@ -494,8 +494,8 @@ class LoginActivity(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     ip = db.Column(db.String(45), nullable=True)
     user_agent = db.Column(db.String(300), nullable=True)
-    action = db.Column(db.String(100), nullable=False)  # e.g. "login_success", "otp_failed"
-    meta = db.Column(db.Text, nullable=True)  # JSON string for extra data
+    action = db.Column(db.String(100), nullable=False)  
+    meta = db.Column(db.Text, nullable=True)  
     location = db.Column(db.String(255), nullable=True)
     user = db.relationship("User", backref=db.backref("activities", lazy=True))
 
@@ -555,13 +555,13 @@ def password_strength_score(plain):
     score = 0
     length = len(plain)
     
-    score += min(40, (length * 4))  # up to 40
+    score += min(40, (length * 4))  
     classes = 0
     if re.search(r'[a-z]', plain): classes += 1
     if re.search(r'[A-Z]', plain): classes += 1
     if re.search(r'\d', plain): classes += 1
     if re.search(r'[^A-Za-z0-9]', plain): classes += 1
-    score += int((classes / 4) * 35)  # up to 35
+    score += int((classes / 4) * 35)  
     if length > 12:
         score += min(10, length - 12)
     
@@ -704,7 +704,7 @@ def update_session_last_active():
 
 
 
-# Routes
+
 
 @app.route('/')
 def home():

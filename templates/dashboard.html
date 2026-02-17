@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Password Manager Dashboard</title>
 
-    <!-- ICONS -->
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
@@ -21,7 +21,7 @@
             transition: margin-left 0.3s ease;
         }
 
-        /* -------------------- Sidebar -------------------- */
+        
         .sidebar {
             width: 270px;
             background: #2c3e50;
@@ -49,7 +49,7 @@
             display: block;
             text-align: right;
         }
-        /* -------- Categories Sidebar -------- */
+        
         .category-list {
             margin-top: 15px;
         }
@@ -95,7 +95,7 @@
             opacity: 0;
         }
 
-        /* Stats box */
+        
         .stat-box {
             background: #34495e;
             padding: 12px 15px;
@@ -112,7 +112,7 @@
         .stat-title { font-size: 0.9rem; opacity: 0.9; }
         .stat-value { font-size: 1.3rem; font-weight: bold; }
 
-        /* Circle score */
+        
         .circle-score {
             width: 110px;
             height: 110px;
@@ -155,7 +155,7 @@
 
         .sidebar a:hover { background-color:#2980b9; }
 
-        /* -------------------- Main Area -------------------- */
+        
         .main-content {
             margin-left: 290px;
             padding: 20px;
@@ -198,7 +198,7 @@
 <body class="{% if current_user.is_authenticated and current_user.pref_dark_mode %}dark{% endif %}">
 
 
-    <!-- ========== SIDEBAR ========== -->
+    
     <div class="sidebar" id="sidebar">
 
         <div class="collapse-btn" onclick="toggleSidebar()">
@@ -264,7 +264,7 @@
 
     </div>
 
-    <!-- ========== MAIN CONTENT ========== -->
+    
     <div class="main-content">
 
         <!-- TOP NAVBAR -->
@@ -285,7 +285,7 @@
             
         </div>
 
-        <!-- PROFILE DROPDOWN -->
+        
         <div style="position:relative;">
             <div id="profileBtn" style="cursor:pointer; display:flex; align-items:center;">
                 <i class="fas fa-user-circle" style="font-size:32px; color:#2c3e50;"></i>
@@ -324,10 +324,10 @@
             {% endif %}
         </div>
 
-        <!-- -- Search bar -- -->
+        
         <input type="text" id="searchInput" placeholder="Search by website or username..." />
 
-        <!-- TABLE -->
+        
         <table id="passwordTable">
             <thead>
                 <tr>
@@ -359,7 +359,7 @@
 
     </div>
 
-    <!-- ========== JAVASCRIPT ========== -->
+    
     <script>
         function toggleSidebar() {
             document.getElementById("sidebar").classList.toggle("collapsed");
@@ -397,7 +397,7 @@
 
                 setTimeout(() => {
                     span.textContent = "••••••••";
-                }, 8000); // auto-hide after 8 seconds
+                }, 8000); 
             })
                 .catch(() => showFlash("Failed to reveal password", "danger"));
         }

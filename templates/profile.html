@@ -41,7 +41,7 @@
             margin: auto;
         }
 
-        /* HEADER */
+        
         .header {
             background: var(--card);
             padding: 25px;
@@ -74,7 +74,7 @@
             color: var(--subtext);
         }
 
-        /* SECTIONS */
+        
         .section {
             margin-top: 30px;
         }
@@ -83,7 +83,7 @@
             font-size: 1.4rem;
         }
 
-        /* CARDS GRID */
+        
         .grid {
             display: grid;
             gap: 20px;
@@ -108,7 +108,7 @@
             font-weight: 700;
         }
 
-        /* SCORE CIRCLE */
+        
         .score-circle {
             width: 160px;
             height: 160px;
@@ -124,7 +124,7 @@
         .score-circle.mid { border-color: #f1c40f; }
         .score-circle.low { border-color: #e74c3c; }
 
-        /* LIST TABLE */
+        
         table {
             width:100%;
             border-collapse: collapse;
@@ -140,7 +140,7 @@
             text-align:left;
         }
 
-        /* BUTTONS */
+        
         .btn {
             display:inline-block;
             padding:10px 16px;
@@ -159,7 +159,7 @@
             background:#c0392b;
         }
 
-        /* DARK MODE TOGGLE */
+        
         .toggle {
             display:flex;
             align-items:center;
@@ -200,7 +200,7 @@
 
 <div class="container">
 
-    <!-- HEADER -->
+    
     <div class="header">
         <div class="icon"><i class="fas fa-user"></i></div>
         <div class="info">
@@ -210,7 +210,7 @@
     </div>
 
 
-    <!-- SECURITY SCORE -->
+    
     <div class="card" style="text-align:center;">
         <h3>Your Security Score</h3>
         <div class="score-circle 
@@ -222,7 +222,7 @@
     </div>
 
 
-    <!-- STATS GRID -->
+    
     <div class="section">
         <h3>Account Overview</h3>
         <div class="grid">
@@ -246,7 +246,7 @@
     </div>
 
 
-    <!-- MFA -->
+    
     <div class="section">
         <h3>Multi-Factor Authentication</h3>
         <div class="card">
@@ -261,7 +261,7 @@
     </div>
 
 
-    <!-- DARK MODE -->
+    
     <div class="section">
         <h3>Appearance</h3>
         <div class="card">
@@ -275,7 +275,7 @@
     </div>
 
 
-    <!-- ACTIVE SESSIONS -->
+    
     <div class="section">
         <h3>Active Sessions</h3>
         <div class="card">
@@ -300,7 +300,7 @@
     </div>
 
 
-    <!-- ACTIVITY -->
+    
     <div class="section">
         <h3>Recent Activity</h3>
         <div class="card">
@@ -316,7 +316,7 @@
                 <tr>
                     <td>{{ a.timestamp }}</td>
                     <td>{{ a.action }}</td>
-                    <!--{% set meta = a.meta | default("{}") | safe | tojson %}--> 
+                    
                     <td>{{a.ip}}</td>
                     <td>{{a.location }}</td>
 
@@ -327,7 +327,7 @@
     </div>
 
 
-    <!-- BACK BUTTON -->
+    
     <div class="section">
         <a class="btn" href="/dashboard">← Back to Dashboard</a>
     </div>
