@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Password Manager Dashboard</title>
 
-    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 
     <style>
         * { box-sizing: border-box; margin:0; padding:0; }
@@ -21,7 +19,6 @@
             transition: margin-left 0.3s ease;
         }
 
-        
         .sidebar {
             width: 270px;
             background: #2c3e50;
@@ -33,13 +30,11 @@
             top: 0;
             overflow-y: auto;
             box-shadow: 2px 0px 10px rgba(0,0,0,0.2);
-            transition: width 0.3s ease;
+            transition: transform 0.3s ease;
         }
 
         .sidebar.collapsed {
-            width: 80px;
-            padding: 20px 15px;
-            text-align: center;
+            transform: translateX(-100%);
         }
 
         .collapse-btn {
@@ -48,6 +43,20 @@
             margin-bottom: 20px;
             display: block;
             text-align: right;
+        }
+
+        .global-toggle {
+            position: fixed;
+            top: 15px;
+            left: 5px;
+            background: #2c3e50;
+            color: #ecf0f1;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
         
         .category-list {
@@ -95,7 +104,6 @@
             opacity: 0;
         }
 
-        
         .stat-box {
             background: #34495e;
             padding: 12px 15px;
@@ -112,7 +120,6 @@
         .stat-title { font-size: 0.9rem; opacity: 0.9; }
         .stat-value { font-size: 1.3rem; font-weight: bold; }
 
-        
         .circle-score {
             width: 110px;
             height: 110px;
@@ -155,7 +162,6 @@
 
         .sidebar a:hover { background-color:#2980b9; }
 
-        
         .main-content {
             margin-left: 290px;
             padding: 20px;
@@ -164,7 +170,7 @@
         }
 
         .sidebar.collapsed ~ .main-content {
-            margin-left: 100px;
+            margin-left: 20px;
         }
 
         h1 { margin-bottom: 5px; color: #2c3e50; }
@@ -179,6 +185,38 @@
         .top-links { margin: 15px 0; display:flex; gap:15px; flex-wrap:wrap; }
         .top-links a { padding:10px 18px; background:#3498db; color:#fff; border-radius:6px; font-weight:600; text-decoration:none; }
 
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 420px;
+            margin: 15px 0;
+        }
+
+        .search-wrapper i {
+            position: absolute;
+            top: 50%;
+            left: 14px;
+            transform: translateY(-50%);
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 11px 14px 11px 38px;
+            border-radius: 25px;
+            border: 1px solid #dcdfe6;
+            background: #ffffff;
+            font-size: 0.95rem;
+            transition: all 0.25s ease;
+        }
+
+        #searchInput:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.15);
+            outline: none;
+        }
+
         table {
             width:100%; max-width:1000px; border-collapse: collapse;
             background:#fff; border-radius:8px; overflow:hidden;
@@ -191,297 +229,127 @@
         .toggle-btn { background:#3498db; color:#fff; }
         .copy-btn { background:#2ecc71; color:#fff; }
         .delete-btn { background:#e74c3c; color:#fff; }
-
     </style>
 </head>
 
 <body class="{% if current_user.is_authenticated and current_user.pref_dark_mode %}dark{% endif %}">
 
+<button class="global-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
 
+<div class="sidebar" id="sidebar">
     
-    <div class="sidebar" id="sidebar">
 
-        <div class="collapse-btn" onclick="toggleSidebar()">
-            <i class="fas fa-bars"></i>
-        </div>
+    <h2>Security Overview</h2>
 
-        <h2>Security Overview</h2>
-
-        <div class="circle-score 
-            {% if score < 40 %}low{% elif score < 70 %}mid{% endif %}">
-            {{ score }}
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-title">Total Passwords</div>
-            <div class="stat-value">{{ total_passwords }}</div>
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-title">Weak Passwords</div>
-            <div class="stat-value">{{ weak_passwords }}</div>
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-title">Reused Groups</div>
-            <div class="stat-value">{{ reused_count }}</div>
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-title">Sessions</div>
-            <div class="stat-value">{{ sessions|length }}</div>
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-title">Recent Activity</div>
-            <div class="stat-value">{{ activities|length }}</div>
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-title">MFA Status</div>
-            <div class="stat-value">
-                {% if user.mfa_enabled %} Enabled {% else %} Disabled {% endif %}
-            </div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-title">Categories</div>
-        </div>
-
-        <div class="category-list">
-            <div class="category-item active" onclick="filterCategory('all', this)">
-                <span>All</span>
-                <span class="category-count">{{ total_passwords }}</span>
-            </div>
-
-            {% for cat, count in categories.items() %}
-            <div class="category-item" onclick="filterCategory('{{ cat }}', this)">
-                <span>{{ cat }}</span>
-                <span class="category-count">{{ count }}</span>
-            </div>
-            {% endfor %}
-        </div>
-
-
+    <div class="circle-score {% if score < 40 %}low{% elif score < 70 %}mid{% endif %}">
+        {{ score }}
     </div>
 
-    
-    <div class="main-content">
+    <div class="stat-box"><div class="stat-title">Total Passwords</div><div class="stat-value">{{ total_passwords }}</div></div>
+    <div class="stat-box"><div class="stat-title">Weak Passwords</div><div class="stat-value">{{ weak_passwords }}</div></div>
+    <div class="stat-box"><div class="stat-title">Reused Groups</div><div class="stat-value">{{ reused_count }}</div></div>
+    <div class="stat-box"><div class="stat-title">Sessions</div><div class="stat-value">{{ sessions|length }}</div></div>
+    <div class="stat-box"><div class="stat-title">Recent Activity</div><div class="stat-value">{{ activities|length }}</div></div>
+    <div class="stat-box"><div class="stat-title">MFA Status</div><div class="stat-value">{% if user.mfa_enabled %} Enabled {% else %} Disabled {% endif %}</div></div>
 
-        <!-- TOP NAVBAR -->
-    <div class="top-nav" style="
-        width:100%;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        padding:15px 10px;
-        border-bottom:1px solid #ddd;
-        background:#ffffff;
-    ">
-        <div>
-            <h1 style="margin:0; color:#2c3e50;">
-                Welcome, {{ user.display_name if user.display_name else user.email }}
-            </h1>
-            <p class="subtitle">Your Password Manager Dashboard</p>
-            
+    <div class="stat-box"><div class="stat-title">Categories</div></div>
+
+    <div class="category-list">
+        <div class="category-item active" onclick="filterCategory('all', this)">
+            <span>All</span>
+            <span class="category-count">{{ total_passwords }}</span>
         </div>
-
-        
-        <div style="position:relative;">
-            <div id="profileBtn" style="cursor:pointer; display:flex; align-items:center;">
-                <i class="fas fa-user-circle" style="font-size:32px; color:#2c3e50;"></i>
-            </div>
-
-            <div id="profileMenu" style="
-                display:none;
-                position:absolute;
-                right:0;
-                top:40px;
-                background:white;
-                border:1px solid #ccc;
-                border-radius:8px;
-                width:180px;
-                box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                overflow:hidden;
-                z-index:999;
-            ">
-                <a href="/profile" style="padding:10px; display:block; text-decoration:none; color:#333;">👤 View Profile</a>
-                <a href="/profile_edit" style="padding:10px; display:block; text-decoration:none; color:#333;">✏️ Edit Personal Data</a>
-                <a href="/generate_token" style="padding:10px; display:block; text-decoration:none; color:#333;">🗝️ View API Token</a>
-                <a href="/logout" style="padding:10px; display:block; text-decoration:none; color:#333;">🚪 Logout</a>
-            </div>
+        {% for cat, count in categories.items() %}
+        <div class="category-item" onclick="filterCategory('{{ cat }}', this)">
+            <span>{{ cat }}</span>
+            <span class="category-count">{{ count }}</span>
         </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="main-content">
+
+<div class="top-nav" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:15px 10px;border-bottom:1px solid #ddd;background:#ffffff;">
+    <div>
+        <h1 style="margin:0; color:#2c3e50;">Welcome, {{ user.display_name if user.display_name else user.email }}</h1>
+        <p class="subtitle">Your Password Manager Dashboard</p>
     </div>
 
-
-        <div id="flash-container"></div>
-
-        <div class="top-links">
-            <a href="/add_password">Add New</a>
-            <a href="/logout">Logout</a>
-
-            {% if user.mfa_enabled==0 %}
-                <a href="/mfa">Setup MFA</a>
-            {% endif %}
+    <div style="position:relative;">
+        <div id="profileBtn" style="cursor:pointer; display:flex; align-items:center;">
+            <i class="fas fa-user-circle" style="font-size:32px; color:#2c3e50;"></i>
         </div>
 
-        
-        <input type="text" id="searchInput" placeholder="Search by website or username..." />
-
-        
-        <table id="passwordTable">
-            <thead>
-                <tr>
-                    <th data-column="0">Website</th>
-                    <th data-column="1">Username</th>
-                    <th>Password</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-
-            <tbody>
-            {% for p in passwords %}
-                <tr id="password-row-{{ p.id }}" data-category="{{ p.category }}">
-                    <td>{{ p.website }}</td>
-                    <td>{{ p.username }}</td>
-                    <td>
-                        <span id="password-text-{{ p.id }}">••••••••</span>
-                        <button class="btn toggle-btn" onclick="revealPassword({{ p.id }})">Reveal</button>
-                        <button class="btn copy-btn" onclick="copyPassword({{ p.id }})">Copy</button>
-                    </td>
-                    <td>
-                        <a href="/edit_password/{{ p.id }}" class="btn toggle-btn">Edit</a>
-                        <button class="btn delete-btn" onclick="deletePassword({{ p.id }})">Delete</button>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-
+        <div id="profileMenu" style="display:none;position:absolute;right:0;top:40px;background:white;border:1px solid #ccc;border-radius:8px;width:180px;box-shadow:0 4px 10px rgba(0,0,0,0.15);overflow:hidden;z-index:999;">
+            <a href="/profile" style="padding:10px; display:block; text-decoration:none; color:#333;">👤 View Profile</a>
+            <a href="/profile_edit" style="padding:10px; display:block; text-decoration:none; color:#333;">✏️ Edit Personal Data</a>
+            <a href="/generate_token" style="padding:10px; display:block; text-decoration:none; color:#333;">🗝️ View API Token</a>
+            <a href="/logout" style="padding:10px; display:block; text-decoration:none; color:#333;">🚪 Logout</a>
+        </div>
     </div>
+</div>
 
-    
-    <script>
-        function toggleSidebar() {
-            document.getElementById("sidebar").classList.toggle("collapsed");
-        }
+<div id="flash-container"></div>
 
-        function showFlash(msg, cat){
-            const c=document.getElementById("flash-container");
-            const d=document.createElement("div");
-            d.className = "flash "+cat;
-            d.textContent = msg;
-            c.appendChild(d);
-            setTimeout(()=>{d.style.opacity=0; setTimeout(()=>d.remove(),500)}, 3000);
-        }
+<div class="top-links">
+    <a href="/add_password">Add New</a>
+    <a href="/logout">Logout</a>
+    {% if user.mfa_enabled==0 %}
+        <a href="/mfa">Setup MFA</a>
+    {% endif %}
+</div>
 
-        function deletePassword(id){
-            if(!confirm("Delete this password?")) return;
-            fetch(`/delete_password/${id}`,{method:"POST"})
-            .then(r=>r.json())
-            .then(d=>{
-                if(d.success){
-                    document.getElementById(`password-row-${id}`).remove();
-                    showFlash("Deleted successfully","success");
-                }
-            });
-        }
+<div class="search-wrapper">
+    <i class="fas fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Search by website or username..." />
+</div>
 
-        function revealPassword(id) {
-            fetch(`/vault/reveal/${id}`, {
-                method: "POST"
-            })
-            .then(res => res.json())
-            .then(data => {
-                const span = document.getElementById(`password-text-${id}`);
-                span.textContent = data.password;
+<table id="passwordTable">
+<thead>
+<tr>
+<th data-column="0">Website</th>
+<th data-column="1">Username</th>
+<th>Password</th>
+<th>Actions</th>
+</tr>
+</thead>
 
-                setTimeout(() => {
-                    span.textContent = "••••••••";
-                }, 8000); 
-            })
-                .catch(() => showFlash("Failed to reveal password", "danger"));
-        }
+<tbody>
+{% for p in passwords %}
+<tr id="password-row-{{ p.id }}" data-category="{{ p.category }}">
+<td>{{ p.website }}</td>
+<td>{{ p.username }}</td>
+<td>
+<span id="password-text-{{ p.id }}">••••••••</span>
+<button class="btn toggle-btn" onclick="revealPassword({{ p.id }})">Reveal</button>
+<button class="btn copy-btn" onclick="copyPassword({{ p.id }})">Copy</button>
+</td>
+<td>
+<a href="/edit_password/{{ p.id }}" class="btn toggle-btn">Edit</a>
+<button class="btn delete-btn" onclick="deletePassword({{ p.id }})">Delete</button>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 
-        function copyPassword(id) {
-            fetch(`/vault/reveal/${id}`, {
-                method: "POST"
-            })
-            .then(res => res.json())
-            .then(data => {
-                navigator.clipboard.writeText(data.password);
-                showFlash("Password copied to clipboard", "success");
-            })
-            .catch(() => showFlash("Failed to copy password", "danger"));
-        }
+</div>
 
-
-        const profileBtn = document.getElementById("profileBtn");
-        const profileMenu = document.getElementById("profileMenu");
-
-        profileBtn.addEventListener("click", () => {
-            profileMenu.style.display =
-                profileMenu.style.display === "block" ? "none" : "block";
-        });
-
-        document.addEventListener("click", (e) => {
-            if (!profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
-                profileMenu.style.display = "none";
-            }
-        });
-
-
-        
-
-        document.getElementById("searchInput").addEventListener("input",function(){
-            const f=this.value.toLowerCase();
-            document.querySelectorAll("#passwordTable tbody tr").forEach(r=>{
-                const w=r.cells[0].textContent.toLowerCase();
-                const u=r.cells[1].textContent.toLowerCase();
-                r.style.display = (w.includes(f)||u.includes(f)) ? "" : "none";
-            });
-        });
-
-        function filterCategory(category, el) {
-            document.querySelectorAll(".category-item").forEach(c =>
-                c.classList.remove("active")
-            );
-            el.classList.add("active");
-
-            document.querySelectorAll("#passwordTable tbody tr").forEach(row => {
-                const rowCat = row.dataset.category || "General";
-                row.style.display =
-                    category === "all" || rowCat === category ? "" : "none";
-            });
-        }
-
-    </script>
-    <script>
-        const disableMfaBtn = document.getElementById("disable-mfa-btn");
-
-        if (disableMfaBtn) {
-            disableMfaBtn.addEventListener("click", async () => {
-                if (!confirm("Are you sure you want to disable MFA?")) return;
-
-                const res = await fetch("/mfa/toggle", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ action: "disable" })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    showFlash("MFA disabled successfully", "success");
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showFlash("Failed to disable MFA", "danger");
-                }
-            });
-        }
-    </script>
-
+<script>
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("collapsed")}
+function showFlash(msg,cat){const c=document.getElementById("flash-container");const d=document.createElement("div");d.className="flash "+cat;d.textContent=msg;c.appendChild(d);setTimeout(()=>{d.style.opacity=0;setTimeout(()=>d.remove(),500)},3000)}
+function deletePassword(id){if(!confirm("Delete this password?"))return;fetch(`/delete_password/${id}`,{method:"POST"}).then(r=>r.json()).then(d=>{if(d.success){document.getElementById(`password-row-${id}`).remove();showFlash("Deleted successfully","success")}})}
+function revealPassword(id){fetch(`/vault/reveal/${id}`,{method:"POST"}).then(res=>res.json()).then(data=>{const span=document.getElementById(`password-text-${id}`);span.textContent=data.password;setTimeout(()=>{span.textContent="••••••••"},8000)}).catch(()=>showFlash("Failed","danger"))}
+function copyPassword(id){fetch(`/vault/reveal/${id}`,{method:"POST"}).then(res=>res.json()).then(data=>{navigator.clipboard.writeText(data.password);showFlash("Copied","success")}).catch(()=>showFlash("Failed","danger"))}
+const profileBtn=document.getElementById("profileBtn");const profileMenu=document.getElementById("profileMenu");
+profileBtn.addEventListener("click",()=>{profileMenu.style.display=profileMenu.style.display==="block"?"none":"block"});
+document.addEventListener("click",(e)=>{if(!profileBtn.contains(e.target)&&!profileMenu.contains(e.target)){profileMenu.style.display="none"}});
+document.getElementById("searchInput").addEventListener("input",function(){const f=this.value.toLowerCase();document.querySelectorAll("#passwordTable tbody tr").forEach(r=>{const w=r.cells[0].textContent.toLowerCase();const u=r.cells[1].textContent.toLowerCase();r.style.display=(w.includes(f)||u.includes(f))?"":"none"})});
+function filterCategory(category,el){document.querySelectorAll(".category-item").forEach(c=>c.classList.remove("active"));el.classList.add("active");document.querySelectorAll("#passwordTable tbody tr").forEach(row=>{const rowCat=row.dataset.category||"General";row.style.display=category==="all"||rowCat===category?"":"none"})}
+</script>
 
 </body>
 </html>

@@ -41,7 +41,6 @@
             margin: auto;
         }
 
-        
         .header {
             background: var(--card);
             padding: 25px;
@@ -74,7 +73,6 @@
             color: var(--subtext);
         }
 
-        
         .section {
             margin-top: 30px;
         }
@@ -83,7 +81,6 @@
             font-size: 1.4rem;
         }
 
-        
         .grid {
             display: grid;
             gap: 20px;
@@ -108,7 +105,6 @@
             font-weight: 700;
         }
 
-        
         .score-circle {
             width: 160px;
             height: 160px;
@@ -124,7 +120,6 @@
         .score-circle.mid { border-color: #f1c40f; }
         .score-circle.low { border-color: #e74c3c; }
 
-        
         table {
             width:100%;
             border-collapse: collapse;
@@ -140,7 +135,6 @@
             text-align:left;
         }
 
-        
         .btn {
             display:inline-block;
             padding:10px 16px;
@@ -159,7 +153,25 @@
             background:#c0392b;
         }
 
-        
+        .mfa-box {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:15px 18px;
+            border-radius:10px;
+            border:1px solid var(--border);
+        }
+
+        .mfa-status {
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-weight:600;
+        }
+
+        .mfa-status.enabled { color: var(--success); }
+        .mfa-status.disabled { color: var(--danger); }
+
         .toggle {
             display:flex;
             align-items:center;
@@ -197,10 +209,8 @@
 
 <body class="{% if current_user.is_authenticated and current_user.pref_dark_mode %}dark{% endif %}">
 
-
 <div class="container">
 
-    
     <div class="header">
         <div class="icon"><i class="fas fa-user"></i></div>
         <div class="info">
@@ -209,8 +219,6 @@
         </div>
     </div>
 
-
-    
     <div class="card" style="text-align:center;">
         <h3>Your Security Score</h3>
         <div class="score-circle 
@@ -221,8 +229,6 @@
         <p style="margin-top:10px; color:var(--subtext);">Higher scores mean stronger protection</p>
     </div>
 
-
-    
     <div class="section">
         <h3>Account Overview</h3>
         <div class="grid">
@@ -245,23 +251,27 @@
         </div>
     </div>
 
-
-    
     <div class="section">
         <h3>Multi-Factor Authentication</h3>
         <div class="card">
-            {% if user.mfa_enabled %}
-                <p><b style="color:var(--success);">Enabled</b></p>
-                <button class="btn-danger" onclick="toggleMFA()">Disable MFA</button>
-            {% else %}
-                <p><b style="color:var(--danger);">Disabled</b></p>
-                <a href="/mfa_setup" class="btn">Enable MFA</a>
-            {% endif %}
+            <div class="mfa-box">
+                {% if user.mfa_enabled %}
+                    <div class="mfa-status enabled">
+                        <i class="fas fa-shield-check"></i>
+                        Enabled
+                    </div>
+                    <button class="btn btn-danger" onclick="toggleMFA()">Disable MFA</button>
+                {% else %}
+                    <div class="mfa-status disabled">
+                        <i class="fas fa-shield-exclamation"></i>
+                        Disabled
+                    </div>
+                    <a href="/mfa_setup" class="btn">Enable MFA</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-
-    
     <div class="section">
         <h3>Appearance</h3>
         <div class="card">
@@ -274,12 +284,6 @@
         </div>
     </div>
 
-
-    
-    
-
-
-    
     <div class="section">
         <h3>Recent Activity</h3>
         <div class="card">
@@ -295,24 +299,19 @@
                 <tr>
                     <td>{{ a.timestamp }}</td>
                     <td>{{ a.action }}</td>
-                    
                     <td>{{a.ip}}</td>
                     <td>{{a.location }}</td>
-
                 </tr>
                 {% endfor %}
             </table>
         </div>
     </div>
 
-
-    
     <div class="section">
         <a class="btn" href="/dashboard">← Back to Dashboard</a>
     </div>
 
 </div>
-
 
 <script>
 function revokeSession(id){
