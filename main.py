@@ -47,7 +47,7 @@ WEBAUTHN_ORIGIN = "http://localhost:5000"
 
 
 
-MASTER_KEY = Fernet(b"KwgUdkldOt9n4-mXvsI0OIkN6PopNeRSSTTfYhuZegQ=")
+MASTER_KEY = Fernet(b"...")
 
 def encrypt_password(plain):
     return MASTER_KEY.encrypt(plain.encode()).decode()
